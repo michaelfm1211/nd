@@ -58,7 +58,7 @@ void print_header(uint32_t flags, uint64_t len) {
 void print_record64(int64_t record, uint32_t flags, struct options opts) {
   if (opts.hex)
     printf("0x%016" PRIx64 "\n", record);
-  else if (flags & FLAG_UNSIGNED)
+  else if (flags & ND_FLAG_UNSIGNED)
     printf("%" PRIu64 "\n", record);
   else
     printf("%" PRId64 "\n", record);
@@ -67,7 +67,7 @@ void print_record64(int64_t record, uint32_t flags, struct options opts) {
 void print_record32(int32_t record, uint32_t flags, struct options opts) {
   if (opts.hex)
     printf("0x%08" PRIx32 "\n", record);
-  else if (flags & FLAG_UNSIGNED)
+  else if (flags & ND_FLAG_UNSIGNED)
     printf("%" PRIu32 "\n", record);
   else
     printf("%" PRId32 "\n", record);
@@ -80,7 +80,7 @@ void print_records(FILE *file, uint32_t flags, uint64_t len,
   uint64_t records_read;
   size_t read_len;
 
-  if (flags & FLAG_64BITS)
+  if (flags & ND_FLAG_64BITS)
     int_len = sizeof(int64_t);
   else
     int_len = sizeof(int32_t);
@@ -103,7 +103,7 @@ void print_records(FILE *file, uint32_t flags, uint64_t len,
       if (opts.lineno)
         printf("%" PRIu64 ": ", records_read + 1);
 
-      if (flags & FLAG_64BITS)
+      if (flags & ND_FLAG_64BITS)
         print_record64(((int64_t *)buf)[i], flags, opts);
       else
         print_record32(((int32_t *)buf)[i], flags, opts);
