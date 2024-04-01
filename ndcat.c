@@ -91,14 +91,19 @@ void print_records(FILE *file, uint32_t flags, uint64_t len,
     exit(1);
   }
 
+  // if we have a range, we can just skip to right before it
+  if (opts.range) {
+    fseek(file, int_len * (opts.range_start - 1), SEEK_CUR);
+  }
+
   records_read = 0;
   while ((read_len = fread(buf, int_len, 1024, file)) > 0) {
     size_t i;
 
     for (i = 0; i < read_len; i++) {
-      if (opts.range && (records_read + 1 < opts.range_start ||
-                         records_read + 1 > opts.range_end))
-        goto skip;
+      // no need to keep going if we're done with our range
+      if (opts.range && records_read + 1 >= opts.range_end)
+          goto end;
 
       if (opts.lineno)
         printf("%" PRIu64 ": ", records_read + 1);
@@ -108,15 +113,18 @@ void print_records(FILE *file, uint32_t flags, uint64_t len,
       else
         print_record32(((int32_t *)buf)[i], flags, opts);
 
-    skip:
       records_read++;
     }
   }
+end:
   free(buf);
   if (ferror(file)) {
     perror("fread()");
     exit(1);
-  } else if (records_read != len) {
+  }
+  // we're always going to read a wrong amount if we only read a subrange, so
+  // skip on ranges
+  if (records_read != len && !opts.range) {
     fprintf(stderr,
             "warning: File header has incorrect length (expected %" PRIu64
             ", found %" PRIu64 ").\n",
