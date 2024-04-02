@@ -20,7 +20,7 @@ ND files have this format:
         </tr>
     </th>
     <tr>
-        <td>Magic (always `ND`)</td>
+        <td>Magic (always "ND")</td>
         <td>2</td>
     </tr>
     <tr>
@@ -66,12 +66,12 @@ correspond to names in the `libnd.h` header file.
         </tr>
     </th>
     <tr>
-        <td>`ND_FLAG_64BITS`</td>
+        <td>ND_FLAG_64BITS</td>
         <td>Data records are 64 bits (8 bytes) long.</td>
         <td>0</td>
     </tr>
     <tr>
-        <td>`ND_FLAG_UNSIGNED`</td>
+        <td>ND_FLAG_UNSIGNED</td>
         <td>Data represents unsigned integers.</td>
         <td>1</td>
     </tr>
