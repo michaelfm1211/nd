@@ -25,22 +25,36 @@ void usage(void) {
 void parse_range(struct options *opts, char *str) {
   char *endptr;
 
+  // ensure number is not negative
+  if (str[0] == '-')
+    goto err_out_of_bounds;
+
   opts->range_start = strtoll(str, &endptr, 10);
+  if (opts->range_start < 1)
+    goto err_out_of_bounds;
   if (*endptr == '\0') {
+    // if this was the only number, then the we only want to show one record
+    // and so the end is the same as the start.
     opts->range_end = opts->range_start;
     return;
   }
 
-  if (*endptr != ',') {
-    fprintf(stderr, "error: Invalid range syntax.\n");
-    exit(1);
-  }
+  if (*endptr != ',')
+    goto err_invalid_syntax;
 
   opts->range_end = strtoll(endptr + 1, &endptr, 10);
-  if (*endptr != '\0') {
-    fprintf(stderr, "error: Invalid range syntax.\n");
-    exit(1);
-  }
+  if (*endptr != '\0')
+    goto err_out_of_bounds;
+  if (opts->range_end < opts->range_start)
+    goto err_out_of_bounds;
+
+  return;
+err_invalid_syntax:
+  fprintf(stderr, "error: Invalid range syntax.\n");
+  exit(1);
+err_out_of_bounds:
+  fprintf(stderr, "error: Range out of bounds.\n");
+  exit(1);
 }
 
 void print_header(uint32_t flags, uint64_t len) {
@@ -102,7 +116,7 @@ void print_records(FILE *file, uint32_t flags, uint64_t len,
 
     for (i = 0; i < read_len; i++) {
       // no need to keep going if we're done with our range
-      if (opts.range && records_read + 1 >= opts.range_end)
+      if (opts.range && records_read > opts.range_end - opts.range_start)
           goto end;
 
       if (opts.lineno)
