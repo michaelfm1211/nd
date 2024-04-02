@@ -11,6 +11,7 @@ const char *nd_flag_strings[32] = {
     U(16),    U(17),      U(18), U(19), U(20), U(21), U(22), U(23),
     U(24),    U(25),      U(26), U(27), U(28), U(29), U(30), U(31)};
 
+// Print fread() error on error, or print a message on EOF.
 static void fread_error(FILE *file, const char *msg) {
   if (ferror(file)) {
     perror("fread()");
@@ -19,6 +20,8 @@ static void fread_error(FILE *file, const char *msg) {
   }
 }
 
+// Read a ND header from file. This function validates the magic, then stores
+// the flags and reported length into the pointers passed.
 int nd_readhdr(FILE *file, uint32_t *flags, uint64_t *len) {
   char magic[2];
 
