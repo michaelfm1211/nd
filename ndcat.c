@@ -74,6 +74,8 @@ void print_record64(int64_t record, uint32_t flags, struct options opts) {
     printf("0x%016" PRIx64 "\n", record);
   else if (flags & ND_FLAG_UNSIGNED)
     printf("%" PRIu64 "\n", record);
+  else if (flags & ND_FLAG_FLOAT)
+    printf("%f\n", *(double *)&record);
   else
     printf("%" PRId64 "\n", record);
 }
@@ -83,6 +85,8 @@ void print_record32(int32_t record, uint32_t flags, struct options opts) {
     printf("0x%08" PRIx32 "\n", record);
   else if (flags & ND_FLAG_UNSIGNED)
     printf("%" PRIu32 "\n", record);
+  else if (flags & ND_FLAG_FLOAT)
+    printf("%f\n", *(float *)&record);
   else
     printf("%" PRId32 "\n", record);
 }
@@ -189,8 +193,15 @@ int main(int argc, char *argv[]) {
   if (nd_readhdr(file, &flags, &len) == -1)
     return 1;
 
-  if (opts.print_header)
+  if ((flags & ND_FLAG_UNSIGNED) && (flags & ND_FLAG_FLOAT)) {
+    fprintf(stderr, "error: Header contains both unsigned and float flags.\n");
+    return 1;
+  }
+
+  if (opts.print_header) {
     print_header(flags, len);
-  print_records(file, flags, len, opts);
+  } else {
+    print_records(file, flags, len, opts);
+  }
   return 0;
 }

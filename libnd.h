@@ -5,6 +5,7 @@
 
 #define ND_FLAG_64BITS (1 << 0)
 #define ND_FLAG_UNSIGNED (1 << 1)
+#define ND_FLAG_FLOAT (1 << 2)
 
 extern const char *nd_flag_strings[32];
 

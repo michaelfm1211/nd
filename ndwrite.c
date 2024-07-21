@@ -5,8 +5,8 @@
 #include <unistd.h>
 
 void usage(void) {
-  fprintf(stderr, "usage: ndwrite [-h flag1,flag2:length] [-r bits:value] [-x "
-                  "bits:hex_value]\n");
+  fprintf(stderr, "usage: ndwrite [-h flag1,flag2:length] [-d|-x|-t|-f]"
+                  "bits:value\n");
   exit(1);
 }
 
@@ -71,9 +71,49 @@ err_arg:
   exit(1);
 }
 
-void write_record(char *arg, int base) {
-  char *lasts, *part, *endptr;
-  size_t record_len; 
+int conv_datatype(const char *str, int bits, char datatype, uint64_t *out) {
+  uint64_t data_dx;
+  float data_f32;
+  double data_f64;
+  char *endptr;
+
+  switch (datatype) {
+  case 'd':
+    data_dx = (uint64_t)strtoll(str, &endptr, 10);
+    if (*endptr != '\0')
+      return 0;
+    *out = data_dx;
+    return 1;
+  case 'x':
+    if (!strncmp(str, "0x", 2))
+      str += 2;
+    data_dx = (uint64_t)strtoll(str, &endptr, 16);
+    if (*endptr != '\0')
+      return 0;
+    *out = data_dx;
+    return 1;
+  case 'f':
+    if (bits == sizeof(uint32_t)) {
+      data_f32 = strtof(str, &endptr);
+
+      if (*endptr != '\0')
+        return 0;
+      *out = *(uint32_t *)&data_f32;
+    } else {
+      data_f64 = strtod(str, &endptr);
+      if (*endptr != '\0')
+        return 0;
+      *out = *(uint64_t *)&data_f64;
+    }
+    return 1;
+  default:
+    return 0;
+  }
+}
+
+void write_record(char *arg, char datatype) {
+  char *lasts, *part;
+  size_t record_len;
   uint64_t data;
 
   part = strtok_r(arg, ":", &lasts);
@@ -89,10 +129,7 @@ void write_record(char *arg, int base) {
   part = strtok_r(NULL, ":", &lasts);
   if (part == NULL)
     goto err_arg;
-  if (base == 16 && !strncmp(part, "0x", 2))
-    part += 2;
-  data = (uint64_t)strtoll(part, &endptr, base);
-  if (*endptr != '\0')
+  if (!conv_datatype(part, record_len, datatype, &data))
     goto err_arg;
 
   if (fwrite(&data, record_len, 1, stdout) != 1)
@@ -113,16 +150,15 @@ int main(int argc, char *argv[]) {
   if (argc < 2)
     usage();
 
-  while ((optch = getopt(argc, argv, "h:r:x:")) != -1) {
+  while ((optch = getopt(argc, argv, "h:d:x:f:")) != -1) {
     switch (optch) {
     case 'h':
       write_hdr(optarg);
       break;
-    case 'r':
-      write_record(optarg, 10);
-      break;
+    case 'd':
     case 'x':
-      write_record(optarg, 16);
+    case 'f':
+      write_record(optarg, optch);
       break;
     case '?':
     default:

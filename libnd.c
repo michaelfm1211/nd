@@ -1,15 +1,14 @@
 #include "libnd.h"
 #include <stdint.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
 #define U(n) "undefined (bit " #n ")"
 const char *nd_flag_strings[32] = {
-    "64bits", "unsigned", U(2),  U(3),  U(4),  U(5),  U(6),  U(7),
-    U(8),     U(9),       U(10), U(11), U(12), U(13), U(14), U(15),
-    U(16),    U(17),      U(18), U(19), U(20), U(21), U(22), U(23),
-    U(24),    U(25),      U(26), U(27), U(28), U(29), U(30), U(31)};
+    "64bits", "unsigned", "float", U(3),  U(4),  U(5),  U(6),  U(7),
+    U(8),     U(9),       U(10),   U(11), U(12), U(13), U(14), U(15),
+    U(16),    U(17),      U(18),   U(19), U(20), U(21), U(22), U(23),
+    U(24),    U(25),      U(26),   U(27), U(28), U(29), U(30), U(31)};
 
 // Print fread() error on error, or print a message on EOF.
 static void fread_error(FILE *file, const char *msg) {

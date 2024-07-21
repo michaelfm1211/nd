@@ -13,8 +13,14 @@ all: libnd.a $(BINS)
 dev: CFLAGS += -g -O0 -fsanitize=address -fsanitize=undefined
 dev: libnd.a $(BINS)
 
+.PHONY: docs
+docs: ndcat.1
+
 libnd.a: libnd.o
 	$(AR) rcs $@ $<
+
+ndcat.1: ndcat.scd
+	scdoc < $^ > $@
 
 .PHONY: clean
 clean:

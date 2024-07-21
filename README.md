@@ -75,6 +75,11 @@ correspond to names in the `libnd.h` header file.
         <td>Data represents unsigned integers.</td>
         <td>1</td>
     </tr>
+    <tr>
+        <td>ND_FLAG_FLOAT</td>
+        <td>Data represents IEEE754 floating point numbers.</td>
+        <td>2</td>
+    </tr>
 </table>
 
 The length header field is **optional**. If used, then it indicates the number
