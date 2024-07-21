@@ -24,7 +24,7 @@ ND files have this format:
         <td>2</td>
     </tr>
     <tr>
-        <td>Flags</td>
+        <td>Type (see table below)</td>
         <td>4</td>
     </tr>
     <tr>
@@ -51,34 +51,54 @@ The first three fields (magic, flags, and length) are the header and are
 collectively 14 bytes. The magic must be the ASCII characters `ND` (`0x4e44`)
 for the file to be identified as a ND file.
 
-The flags field has 32 bits, each bit indicating a property of the data. The
-below table shows the currently defined flags. Other bits may be used for
-non-standard purposes, but there is no guarantee that they won't be assigned a
-standard purpose at some point in the future. The names in the table below
-correspond to names in the `libnd.h` header file.
+The type field has 32 bits. Types with an even ID are 64 bits long, while types
+with an odd ID are 32 bits. The below table shows the currently defined types.
+Other IDs may be used for non-standard purposes, but there is no guarantee that
+they won't be assigned a standard purpose at some point in the future. The
+names in the table below correspond to names in the `libnd.h` header file.
 
 <table>
     <th>
         <tr>
             <td>Name</td>
-            <td>Indication</td>
-            <td>Bit</td>
+            <td>Description</td>
+            <td>ID</td>
         </tr>
     </th>
     <tr>
-        <td>ND_FLAG_64BITS</td>
-        <td>Data records are 64 bits (8 bytes) long.</td>
+        <td>ND_TYPE_INT64</td>
+        <td>64-bit signed integer.</td>
         <td>0</td>
     </tr>
     <tr>
-        <td>ND_FLAG_UNSIGNED</td>
-        <td>Data represents unsigned integers.</td>
+        <td>ND_TYPE_INT32</td>
+        <td>32-bit signed integer.</td>
         <td>1</td>
     </tr>
     <tr>
-        <td>ND_FLAG_FLOAT</td>
-        <td>Data represents IEEE754 floating point numbers.</td>
+        <td>ND_TYPE_UINT64</td>
+        <td>64-bit unsigned integer.</td>
         <td>2</td>
+    </tr>
+    <tr>
+        <td>ND_TYPE_UINT32</td>
+        <td>32-bit unsigned integer.</td>
+        <td>3</td>
+    </tr>
+    <tr>
+        <td>ND_TYPE_FLOAT64</td>
+        <td>IEEE754 double precision floating point number.</td>
+        <td>4</td>
+    </tr>
+    <tr>
+        <td>ND_TYPE_FLOAT32</td>
+        <td>IEEE754 single precision floating point number.</td>
+        <td>5</td>
+    </tr>
+    <tr>
+        <td>ND_TYPE_DATETIME</td>
+        <td>UNIX timestamp (64-bits).</td>
+        <td>6</td>
     </tr>
 </table>
 
@@ -89,16 +109,6 @@ such as zero or `INT64_MAX`, however, this is not required and it may be set to
 anything. For this reason, **do not trust the length field**. If your code
 blindly trusts the length field, then you are setting yourself up for a buffer
 overflow.
-
-Each data record is either 4 bytes long (32 bits) or 8 bytes long (64 bits). If
-your data can fit into 4 bytes, then you should definitely use the 32 bit
-option, as it will make your file about half as big. This is enough to fit a
-regular `int`, `unsigned int`, or `float`. If you have to store large numbers
-with precision (`int64`, `uint64`, or `double`) or want to store timestamps past
-the [Epochalypse](https://en.wikipedia.org/wiki/Year_2038_problem), then use 64
-bits. To indicate how long data records are, set or unset the `ND_FLAG_64BITS`
-flag. If it is unset, then the data should be 4 bytes long. If it is set, then
-the data should be 8 bytes long.
 
 ### Why ND?
 

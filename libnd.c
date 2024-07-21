@@ -3,12 +3,8 @@
 #include <stdio.h>
 #include <string.h>
 
-#define U(n) "undefined (bit " #n ")"
-const char *nd_flag_strings[32] = {
-    "64bits", "unsigned", "float", U(3),  U(4),  U(5),  U(6),  U(7),
-    U(8),     U(9),       U(10),   U(11), U(12), U(13), U(14), U(15),
-    U(16),    U(17),      U(18),   U(19), U(20), U(21), U(22), U(23),
-    U(24),    U(25),      U(26),   U(27), U(28), U(29), U(30), U(31)};
+const char *nd_type_strings[] = {
+    "int64", "int32", "uint64", "uint32", "float64", "float32", "datetime"};
 
 // Print fread() error on error, or print a message on EOF.
 static void fread_error(FILE *file, const char *msg) {
@@ -21,24 +17,24 @@ static void fread_error(FILE *file, const char *msg) {
 
 // Read a ND header from file. This function validates the magic, then stores
 // the flags and reported length into the pointers passed.
-int nd_readhdr(FILE *file, uint32_t *flags, uint64_t *len) {
+int nd_readhdr(FILE *file, uint32_t *type, uint64_t *len) {
   char magic[2];
 
   if (fread(magic, sizeof(char), 2, file) != 2) {
-    fread_error(file, "error: File has no header.\n");
+    fread_error(file, "libnd error: File has no header.\n");
     return -1;
   }
   if (strncmp(magic, "ND", 2)) {
-    fprintf(stderr, "error: File has invalid magic.\n");
+    fprintf(stderr, "libnd error: File has invalid magic.\n");
     return -1;
   }
 
-  if (fread(flags, sizeof(uint32_t), 1, file) != 1) {
-    fread_error(file, "error: File has incomplete header (no flags).\n");
+  if (fread(type, sizeof(uint32_t), 1, file) != 1) {
+    fread_error(file, "libnd error: File has incomplete header (no type).\n");
     return -1;
   }
   if (fread(len, sizeof(uint64_t), 1, file) != 1) {
-    fread_error(file, "error: File has incomplete header (no length).\n");
+    fread_error(file, "libnd error: File has incomplete header (no length).\n");
     return -1;
   }
 

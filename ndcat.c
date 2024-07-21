@@ -1,4 +1,5 @@
 #include "libnd.h"
+#include <time.h>
 #include <inttypes.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -57,48 +58,71 @@ err_out_of_bounds:
   exit(1);
 }
 
-void print_header(uint32_t flags, uint64_t len) {
-  int i;
-
+void print_header(uint32_t type, uint64_t len) {
   printf("header: magic: ND\n");
-  for (i = 0; i < 32; i++) {
-    if ((flags & ((uint32_t)1 << i)) == 0)
-      continue;
-    printf("header: flag: %s\n", nd_flag_strings[i]);
+  if (type < sizeof(nd_type_strings) / sizeof(nd_type_strings[0])) {
+    printf("header: type: %s\n", nd_type_strings[type]);
+  } else {
+    printf("header: type: #%d\n", type);
   }
   printf("header: length: %" PRIu64 "\n", len);
 }
 
-void print_record64(int64_t record, uint32_t flags, struct options opts) {
-  if (opts.hex)
+void print_record64(int64_t record, uint32_t type, struct options opts) {
+  if (opts.hex) {
     printf("0x%016" PRIx64 "\n", record);
-  else if (flags & ND_FLAG_UNSIGNED)
-    printf("%" PRIu64 "\n", record);
-  else if (flags & ND_FLAG_FLOAT)
-    printf("%f\n", *(double *)&record);
-  else
+    return;
+  }
+
+  switch (type) {
+  case ND_TYPE_INT64:
     printf("%" PRId64 "\n", record);
+    break;
+  case ND_TYPE_UINT64:
+    printf("%" PRIu64 "\n", record);
+    break;
+  case ND_TYPE_FLOAT64:
+    printf("%f\n", *(double *)&record);
+    break;
+  case ND_TYPE_DATETIME:
+    printf("%s", ctime((time_t *)&record));
+    break;
+  default:
+    printf("unexpected value of type %d: 0x%016" PRIx64 "\n", type, record);
+    break;
+  }
 }
 
-void print_record32(int32_t record, uint32_t flags, struct options opts) {
-  if (opts.hex)
+void print_record32(int32_t record, uint32_t type, struct options opts) {
+  if (opts.hex) {
     printf("0x%08" PRIx32 "\n", record);
-  else if (flags & ND_FLAG_UNSIGNED)
-    printf("%" PRIu32 "\n", record);
-  else if (flags & ND_FLAG_FLOAT)
-    printf("%f\n", *(float *)&record);
-  else
+    return;
+  }
+
+  switch (type) {
+  case ND_TYPE_INT32:
     printf("%" PRId32 "\n", record);
+    break;
+  case ND_TYPE_UINT32:
+    printf("%" PRIu32 "\n", record);
+    break;
+  case ND_TYPE_FLOAT32:
+    printf("%f\n", *(float *)&record);
+    break;
+  default:
+    printf("unexpected value of type %d: 0x%08" PRIx32 "\n", type, record);
+    break;
+  }
 }
 
-void print_records(FILE *file, uint32_t flags, uint64_t len,
+void print_records(FILE *file, uint32_t type, uint64_t len,
                    struct options opts) {
   size_t int_len;
   void *buf;
   uint64_t records_read;
   size_t read_len;
 
-  if (flags & ND_FLAG_64BITS)
+  if (type % 2 == 0)
     int_len = sizeof(int64_t);
   else
     int_len = sizeof(int32_t);
@@ -126,10 +150,10 @@ void print_records(FILE *file, uint32_t flags, uint64_t len,
       if (opts.lineno)
         printf("%" PRIu64 ": ", records_read + 1);
 
-      if (flags & ND_FLAG_64BITS)
-        print_record64(((int64_t *)buf)[i], flags, opts);
+      if (type % 2 == 0)
+        print_record64(((int64_t *)buf)[i], type, opts);
       else
-        print_record32(((int32_t *)buf)[i], flags, opts);
+        print_record32(((int32_t *)buf)[i], type, opts);
 
       records_read++;
     }
@@ -154,7 +178,7 @@ int main(int argc, char *argv[]) {
   struct options opts;
   char optch;
   FILE *file;
-  uint32_t flags;
+  uint32_t type;
   uint64_t len;
 
   bzero(&opts, sizeof(struct options));
@@ -190,18 +214,13 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  if (nd_readhdr(file, &flags, &len) == -1)
+  if (nd_readhdr(file, &type, &len) == -1)
     return 1;
-
-  if ((flags & ND_FLAG_UNSIGNED) && (flags & ND_FLAG_FLOAT)) {
-    fprintf(stderr, "error: Header contains both unsigned and float flags.\n");
-    return 1;
-  }
 
   if (opts.print_header) {
-    print_header(flags, len);
+    print_header(type, len);
   } else {
-    print_records(file, flags, len, opts);
+    print_records(file, type, len, opts);
   }
   return 0;
 }
